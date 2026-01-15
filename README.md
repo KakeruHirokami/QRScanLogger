@@ -1,100 +1,73 @@
-# 訪問者カウンターアプリ
+# React + TypeScript + Vite
 
-AWS Amplify Gen 2 を使用した訪問者カウンターアプリケーションです。
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## 機能
+Currently, two official plugins are available:
 
-- サイトへのアクセス数をカウント
-- 同じ IP アドレスからの同日アクセスは 1 回としてカウント
-- 日付別の訪問者数を棒グラフで表示
-- 時間別の訪問者数を折れ線グラフで表示（今日のみ）
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## 技術スタック
+## React Compiler
 
-- **フロントエンド**: React
-- **バックエンド**: AWS Lambda
-- **データベース**: Amazon DynamoDB
-- **API**: Amazon API Gateway
-- **デプロイ**: AWS Amplify
-- **グラフ**: Chart.js / react-chartjs-2
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## セットアップ
+## Expanding the ESLint configuration
 
-### 1. 依存関係のインストール
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-```bash
-npm install
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
 
-### 2. Amplify Gen 2 のセットアップ
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-Amplify Gen 2 では、sandbox 環境を使用してローカルで開発できます：
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-```bash
-npx ampx sandbox
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
-
-このコマンドを実行すると：
-
-- DynamoDB テーブルが作成されます
-- Lambda 関数がデプロイされます
-- API Gateway が設定されます
-- `amplify_outputs.json`が自動生成されます
-
-### 3. アプリケーションの起動
-
-別のターミナルで：
-
-```bash
-npm start
-```
-
-ブラウザで`http://localhost:3000`を開いて動作を確認します。
-
-詳細なセットアップ手順は`SETUP_GEN2.md`を参照してください。
-
-## デプロイ
-
-### Amplify Console へのデプロイ
-
-1. AWS Amplify Console で新しいアプリを作成
-2. GitHub リポジトリを接続
-3. ビルド設定は自動的に`amplify.yml`を使用
-
-### 手動ビルド
-
-```bash
-npm run build
-```
-
-## プロジェクト構造（Gen 2）
-
-```
-├── amplify/
-│   ├── backend.ts              # メインのバックエンド定義
-│   ├── data/
-│   │   └── resource.ts         # DynamoDBテーブル定義
-│   └── function/
-│       ├── recordVisit/
-│       │   ├── resource.ts      # Lambda関数定義
-│       │   └── handler.ts      # Lambda関数の実装
-│       └── getVisits/
-│           ├── resource.ts
-│           └── handler.ts
-├── amplify_outputs.json         # 自動生成される設定ファイル
-├── amplify.yml                  # Amplify Hosting用のビルド設定
-└── src/
-    ├── App.js                   # メインコンポーネント
-    └── App.css                  # スタイル
-```
-
-## 重要な注意事項
-
-1. **IP アドレスの取得**: 本番環境では、API Gateway の設定により IP アドレスが正しく取得されることを確認してください。
-2. **CORS 設定**: API Gateway で CORS が有効になっていることを確認してください。
-3. **環境変数**: Lambda 関数に`VISITS_TABLE_NAME`環境変数が設定されていることを確認してください（`amplify/backend.ts`で自動設定されます）。
-4. **amplify_outputs.json**: このファイルは`npx ampx sandbox`実行時に自動生成されます。手動で編集する必要はありません。
-
-## ライセンス
-
-MIT

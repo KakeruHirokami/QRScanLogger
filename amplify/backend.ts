@@ -1,100 +1,67 @@
 import { defineBackend } from "@aws-amplify/backend";
-import { Stack } from "aws-cdk-lib";
+import { data } from "./data/resource";
+import { visitorHandler } from "./functions/visitor-handler/resource";
 import {
-  CorsHttpMethod,
   HttpApi,
   HttpMethod,
+  CorsHttpMethod,
 } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
-import { PolicyStatement } from "aws-cdk-lib/aws-iam";
-import { Function } from "aws-cdk-lib/aws-lambda";
-import { data } from "./data/resource";
-import { recordVisit } from "./function/recordVisit/resource";
-import { getVisits } from "./function/getVisits/resource";
 
-/**
- * @see https://docs.amplify.aws/react/build-a-backend/ to add storage, functions, and more
- */
-export const backend = defineBackend({
+const backend = defineBackend({
   data,
-  recordVisit,
-  getVisits,
+  visitorHandler,
 });
 
-// Lambda関数にDynamoDBテーブルへのアクセス権限を付与
-const visitsTable = backend.data.resources.tables["Visit"];
+// DynamoDBテーブルへの参照を取得
+const visitorTable = backend.data.resources.tables["Visitor"];
 
-// recordVisit関数への権限付与
-backend.recordVisit.resources.lambda.addToRolePolicy(
-  new PolicyStatement({
-    actions: ["dynamodb:PutItem", "dynamodb:GetItem", "dynamodb:Scan"],
-    resources: [visitsTable.tableArn],
-  })
+// Lambda関数に環境変数を設定
+backend.visitorHandler.addEnvironment(
+  "VISITOR_TABLE_NAME",
+  visitorTable.tableName
 );
 
-(backend.recordVisit.resources.lambda as Function).addEnvironment(
-  "VISITS_TABLE_NAME",
-  visitsTable.tableName
-);
+// Lambda関数にDynamoDBアクセス権限を付与
+visitorTable.grantReadWriteData(backend.visitorHandler.resources.lambda);
 
-// getVisits関数への権限付与
-backend.getVisits.resources.lambda.addToRolePolicy(
-  new PolicyStatement({
-    actions: ["dynamodb:Scan"],
-    resources: [visitsTable.tableArn],
-  })
-);
-
-(backend.getVisits.resources.lambda as Function).addEnvironment(
-  "VISITS_TABLE_NAME",
-  visitsTable.tableName
-);
-
-// API Gatewayの設定
-const apiStack = backend.createStack("api-stack");
-
-const recordVisitIntegration = new HttpLambdaIntegration(
-  "RecordVisitIntegration",
-  backend.recordVisit.resources.lambda
-);
-
-const getVisitsIntegration = new HttpLambdaIntegration(
-  "GetVisitsIntegration",
-  backend.getVisits.resources.lambda
-);
-
-const httpApi = new HttpApi(apiStack, "VisitorCounterApi", {
-  apiName: "visitor-counter-api",
+// REST APIを作成
+const httpApi = new HttpApi(backend.stack, "VisitorApi", {
+  apiName: "visitor-api",
   corsPreflight: {
+    allowOrigins: ["*"],
     allowMethods: [
       CorsHttpMethod.GET,
       CorsHttpMethod.POST,
       CorsHttpMethod.OPTIONS,
     ],
-    allowOrigins: ["*"],
-    allowHeaders: ["*"],
+    allowHeaders: ["Content-Type"],
   },
-  createDefaultStage: true,
 });
 
-// ルートの追加
+// Lambda関数との統合
+const lambdaIntegration = new HttpLambdaIntegration(
+  "VisitorHandlerIntegration",
+  backend.visitorHandler.resources.lambda
+);
+
+// ルートを追加
 httpApi.addRoutes({
-  path: "/recordVisit",
+  path: "/visit",
   methods: [HttpMethod.POST, HttpMethod.OPTIONS],
-  integration: recordVisitIntegration,
+  integration: lambdaIntegration,
 });
 
 httpApi.addRoutes({
-  path: "/getVisits",
+  path: "/stats",
   methods: [HttpMethod.GET, HttpMethod.OPTIONS],
-  integration: getVisitsIntegration,
+  integration: lambdaIntegration,
 });
 
-// 出力の追加
+// APIのURLを出力に追加
 backend.addOutput({
   custom: {
-    apiUrl: httpApi.url,
-    apiName: httpApi.httpApiName,
-    region: Stack.of(httpApi).region,
+    apiUrl: httpApi.url!,
+    apiId: httpApi.httpApiId,
   },
 });

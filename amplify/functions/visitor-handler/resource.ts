@@ -1,6 +1,6 @@
 import { defineFunction } from "@aws-amplify/backend";
 
-export const recordVisit = defineFunction({
-  name: "recordVisit",
+export const visitorHandler = defineFunction({
+  name: "visitor-handler",
   entry: "./handler.ts",
 });
