@@ -79,17 +79,16 @@ function App() {
         );
       }
 
-      // Content-Typeを確認してJSONかどうかを判定
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
+      // JSONパースを試行（Content-Typeヘッダーに依存しない）
+      const text = await response.text();
+      try {
+        const data = JSON.parse(text);
+        return data;
+      } catch (parseError) {
         throw new Error(
-          `JSON以外のレスポンスが返されました: ${text.substring(0, 100)}`
+          `JSONパースに失敗しました。レスポンス: ${text.substring(0, 100)}`
         );
       }
-
-      const data = await response.json();
-      return data;
     } catch (err) {
       console.error("訪問記録エラー:", err);
       setError(err.message);
@@ -126,19 +125,20 @@ function App() {
         );
       }
 
-      // Content-Typeを確認してJSONかどうかを判定
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
+      // JSONパースを試行（Content-Typeヘッダーに依存しない）
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
         throw new Error(
-          `JSON以外のレスポンスが返されました。APIエンドポイントが正しく設定されているか確認してください。レスポンス: ${text.substring(
+          `JSONパースに失敗しました。APIエンドポイントが正しく設定されているか確認してください。レスポンス: ${text.substring(
             0,
             200
           )}`
         );
       }
 
-      const data = await response.json();
       setTotalCount(data.totalCount || 0);
       setDateData(data.visitsByDate || []);
       setHourData(data.visitsByHour || []);
