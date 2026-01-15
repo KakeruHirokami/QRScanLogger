@@ -144,7 +144,7 @@ function App() {
                   // YYYY-MM-DD HH:mm形式を MM/DD HH:mm に変換
                   const dateStr = item.date;
                   const parts = dateStr.split(" ");
-                  
+
                   if (parts.length === 2) {
                     // 時分が含まれている場合
                     const [date, time] = parts;
@@ -166,7 +166,7 @@ function App() {
                       return `${month}/${day} 00:00`;
                     }
                   }
-                  
+
                   // デフォルト: そのまま表示
                   return dateStr;
                 }),

@@ -1,15 +1,10 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import {
-  DynamoDBDocumentClient,
-  PutCommand,
-  ScanCommand,
-} from "@aws-sdk/lib-dynamodb";
-
 // 環境変数の取得
 const TABLE_NAME = process.env.VISITOR_TABLE_NAME || "";
 
-// DynamoDBクライアントの初期化（関数内で初期化することで、バンドル時の問題を回避）
-function getDocClient() {
+// DynamoDBクライアントの初期化（動的インポートを使用してバンドル時の問題を回避）
+async function getDocClient() {
+  const { DynamoDBClient } = await import("@aws-sdk/client-dynamodb");
+  const { DynamoDBDocumentClient } = await import("@aws-sdk/lib-dynamodb");
   const client = new DynamoDBClient({});
   return DynamoDBDocumentClient.from(client);
 }
@@ -83,7 +78,8 @@ export const handler = async (event: ApiGatewayEvent) => {
       // 同じ日の同じIPからの訪問は1人としてカウント
       const key = `${date}#${ipAddress}`;
 
-      const docClient = getDocClient();
+      const docClient = await getDocClient();
+      const { PutCommand } = await import("@aws-sdk/lib-dynamodb");
       await docClient.send(
         new PutCommand({
           TableName: TABLE_NAME,
@@ -105,7 +101,8 @@ export const handler = async (event: ApiGatewayEvent) => {
 
     // 訪問者統計の取得
     if (httpMethod === "GET" && path.includes("/stats")) {
-      const docClient = getDocClient();
+      const docClient = await getDocClient();
+      const { ScanCommand } = await import("@aws-sdk/lib-dynamodb");
       const result = await docClient.send(
         new ScanCommand({
           TableName: TABLE_NAME,
@@ -117,10 +114,11 @@ export const handler = async (event: ApiGatewayEvent) => {
       let totalCount = 0;
 
       if (result.Items) {
-        result.Items.forEach((item: Visitor) => {
+        result.Items.forEach((item) => {
+          const visitor = item as Visitor;
           // timestampから時分を抽出（YYYY-MM-DD HH:mm形式）
           // ISO文字列から直接抽出する方が確実
-          if (item.timestamp) {
+          if (visitor.timestamp) {
             // ISO形式: 2024-01-15T14:30:00.000Z
             const isoMatch = item.timestamp.match(
               /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/
@@ -137,7 +135,7 @@ export const handler = async (event: ApiGatewayEvent) => {
               totalCount++;
             } else {
               // フォールバック: 既存のdateフィールドを使用（古いデータ用）
-              const dateTimeKey = `${item.date} 00:00`;
+              const dateTimeKey = `${visitor.date} 00:00`;
               if (!statsByDateTime[dateTimeKey]) {
                 statsByDateTime[dateTimeKey] = 0;
               }
@@ -146,7 +144,7 @@ export const handler = async (event: ApiGatewayEvent) => {
             }
           } else {
             // timestampがない場合のフォールバック
-            const dateTimeKey = `${item.date} 00:00`;
+            const dateTimeKey = `${visitor.date} 00:00`;
             if (!statsByDateTime[dateTimeKey]) {
               statsByDateTime[dateTimeKey] = 0;
             }
