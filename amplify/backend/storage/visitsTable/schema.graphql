@@ -1,0 +1,7 @@
+type Visit @model {
+  id: ID!
+  ipAddress: String!
+  date: String!
+  timestamp: String!
+  createdAt: String!
+}

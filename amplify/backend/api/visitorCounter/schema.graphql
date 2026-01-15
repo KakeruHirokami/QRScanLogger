@@ -1,0 +1,39 @@
+type Query {
+  getVisits: VisitData
+}
+
+type Mutation {
+  recordVisit: VisitResponse
+}
+
+type VisitData {
+  totalCount: Int!
+  visitsByDate: [DateVisit!]!
+  visitsByHour: [HourVisit!]!
+  allVisits: [Visit!]!
+}
+
+type DateVisit {
+  date: String!
+  count: Int!
+}
+
+type HourVisit {
+  hour: Int!
+  count: Int!
+}
+
+type Visit {
+  id: ID!
+  ipAddress: String!
+  date: String!
+  timestamp: String!
+  createdAt: String!
+}
+
+type VisitResponse {
+  message: String!
+  isNewVisit: Boolean!
+  totalCount: Int!
+  timestamp: String
+}

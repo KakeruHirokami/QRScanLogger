@@ -1,0 +1,24 @@
+version: 1
+backend:
+  phases:
+    build:
+      commands:
+        - npm install
+        - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm install
+        # amplify_outputs.jsonをsrc/にコピー（ビルド時に必要）
+        - cp amplify_outputs.json src/amplify_outputs.json || echo "amplify_outputs.json not found, skipping copy"
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: build
+    files:
+      - "**/*"
+  cache:
+    paths:
+      - node_modules/**/*

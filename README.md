@@ -1,70 +1,100 @@
-# Getting Started with Create React App
+# 訪問者カウンターアプリ
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+AWS Amplify Gen 2 を使用した訪問者カウンターアプリケーションです。
 
-## Available Scripts
+## 機能
 
-In the project directory, you can run:
+- サイトへのアクセス数をカウント
+- 同じ IP アドレスからの同日アクセスは 1 回としてカウント
+- 日付別の訪問者数を棒グラフで表示
+- 時間別の訪問者数を折れ線グラフで表示（今日のみ）
 
-### `npm start`
+## 技術スタック
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **フロントエンド**: React
+- **バックエンド**: AWS Lambda
+- **データベース**: Amazon DynamoDB
+- **API**: Amazon API Gateway
+- **デプロイ**: AWS Amplify
+- **グラフ**: Chart.js / react-chartjs-2
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## セットアップ
 
-### `npm test`
+### 1. 依存関係のインストール
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```bash
+npm install
+```
 
-### `npm run build`
+### 2. Amplify Gen 2 のセットアップ
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Amplify Gen 2 では、sandbox 環境を使用してローカルで開発できます：
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+npx ampx sandbox
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+このコマンドを実行すると：
 
-### `npm run eject`
+- DynamoDB テーブルが作成されます
+- Lambda 関数がデプロイされます
+- API Gateway が設定されます
+- `amplify_outputs.json`が自動生成されます
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### 3. アプリケーションの起動
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+別のターミナルで：
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```bash
+npm start
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+ブラウザで`http://localhost:3000`を開いて動作を確認します。
 
-## Learn More
+詳細なセットアップ手順は`SETUP_GEN2.md`を参照してください。
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## デプロイ
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Amplify Console へのデプロイ
 
-### Code Splitting
+1. AWS Amplify Console で新しいアプリを作成
+2. GitHub リポジトリを接続
+3. ビルド設定は自動的に`amplify.yml`を使用
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### 手動ビルド
 
-### Analyzing the Bundle Size
+```bash
+npm run build
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## プロジェクト構造（Gen 2）
 
-### Making a Progressive Web App
+```
+├── amplify/
+│   ├── backend.ts              # メインのバックエンド定義
+│   ├── data/
+│   │   └── resource.ts         # DynamoDBテーブル定義
+│   └── function/
+│       ├── recordVisit/
+│       │   ├── resource.ts      # Lambda関数定義
+│       │   └── handler.ts      # Lambda関数の実装
+│       └── getVisits/
+│           ├── resource.ts
+│           └── handler.ts
+├── amplify_outputs.json         # 自動生成される設定ファイル
+├── amplify.yml                  # Amplify Hosting用のビルド設定
+└── src/
+    ├── App.js                   # メインコンポーネント
+    └── App.css                  # スタイル
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 重要な注意事項
 
-### Advanced Configuration
+1. **IP アドレスの取得**: 本番環境では、API Gateway の設定により IP アドレスが正しく取得されることを確認してください。
+2. **CORS 設定**: API Gateway で CORS が有効になっていることを確認してください。
+3. **環境変数**: Lambda 関数に`VISITS_TABLE_NAME`環境変数が設定されていることを確認してください（`amplify/backend.ts`で自動設定されます）。
+4. **amplify_outputs.json**: このファイルは`npx ampx sandbox`実行時に自動生成されます。手動で編集する必要はありません。
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## ライセンス
 
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+MIT

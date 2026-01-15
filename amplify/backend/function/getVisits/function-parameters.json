@@ -1,0 +1,14 @@
+{
+  "lambdaLayers": [],
+  "environmentVariableList": [
+    {
+      "cloudFormationParameterName": "visitsTableName",
+      "environmentVariableName": "VISITS_TABLE_NAME"
+    }
+  ],
+  "permissions": {
+    "api": {
+      "visitorCounter": ["read"]
+    }
+  }
+}

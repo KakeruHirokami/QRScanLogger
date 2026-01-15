@@ -21,3 +21,21 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Amplify Gen 2
+amplify_outputs.json
+.amplify-hosting/
+.amplify/
+
+# Amplify Gen 1 (旧バージョン)
+amplify/\#current-cloud-backend
+amplify/.config
+amplify/logs
+amplify/backend/amplify-meta.json
+amplify/backend/.temp
+
+# Build
+build/
+dist/
+.aws/
+.env
