@@ -1,16 +1,16 @@
 .app {
-  max-width: 95%;
+  max-width: 1400px;
   width: 100%;
   margin: 0 auto;
-  padding: 3rem 5rem;
+  padding: 3rem 4rem;
   min-height: 100vh;
 }
 
 /* 超大画面用の調整 */
 @media (min-width: 1920px) {
   .app {
-    max-width: 1800px;
-    padding: 3rem 6rem;
+    max-width: 1600px;
+    padding: 3rem 5rem;
   }
 }
 

@@ -11,9 +11,10 @@
   },
   "dependencies": {
     "aws-amplify": "^6.0.1",
+    "chart.js": "^4.4.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "recharts": "^2.15.0"
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@aws-amplify/backend": "^1.19.0",

@@ -1,16 +1,30 @@
 import { useEffect, useState } from "react";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
   Tooltip,
   Legend,
-  ResponsiveContainer,
-} from "recharts";
+  Filler,
+} from "chart.js";
+import { Line } from "react-chartjs-2";
 import outputs from "../amplify_outputs.json";
 import "./App.css";
+
+// Chart.jsの設定
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 interface VisitorStats {
   date: string;
@@ -124,68 +138,129 @@ function App() {
         <h2 className="chart-title">訪問者数の推移</h2>
         {stats.length > 0 ? (
           <div className="chart-wrapper">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={stats}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fill: "#888", fontSize: 12 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={100}
-                  interval={0}
-                  label={{
-                    value: "日時",
-                    position: "insideBottom",
-                    offset: -5,
-                    style: { fill: "#888" },
-                  }}
-                  tickFormatter={(value) => {
-                    // YYYY-MM-DD HH:mm形式を MM/DD HH:mm に変換
-                    if (!value) return "";
-                    const parts = value.split(" ");
-                    if (parts.length === 2) {
-                      const [date, time] = parts;
-                      if (date && time) {
-                        const [, month, day] = date.split("-");
-                        if (month && day) {
+            <Line
+              data={{
+                labels: stats.map((item) => {
+                  // YYYY-MM-DD HH:mm形式を MM/DD HH:mm に変換
+                  const dateStr = item.date;
+                  const parts = dateStr.split(" ");
+                  
+                  if (parts.length === 2) {
+                    // 時分が含まれている場合
+                    const [date, time] = parts;
+                    if (date && time) {
+                      const dateParts = date.split("-");
+                      if (dateParts.length === 3) {
+                        const [, month, day] = dateParts;
+                        // 時分があることを確認
+                        if (time.includes(":")) {
                           return `${month}/${day} ${time}`;
                         }
                       }
                     }
-                    // フォールバック: そのまま表示
-                    return value || "";
-                  }}
-                />
-                <YAxis
-                  tick={{ fill: "#888" }}
-                  allowDecimals={false}
-                  domain={[0, "auto"]}
-                  label={{
-                    value: "訪問者数",
-                    angle: -90,
-                    position: "insideLeft",
-                    style: { fill: "#888" },
-                  }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#1a1a1a",
-                    border: "1px solid #333",
-                    borderRadius: "8px",
-                  }}
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="count"
-                  stroke="#646cff"
-                  strokeWidth={2}
-                  name="訪問者数"
-                  dot={{ fill: "#646cff", r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+                  } else if (parts.length === 1) {
+                    // 日付のみの場合（フォールバック）
+                    const dateParts = dateStr.split("-");
+                    if (dateParts.length === 3) {
+                      const [, month, day] = dateParts;
+                      return `${month}/${day} 00:00`;
+                    }
+                  }
+                  
+                  // デフォルト: そのまま表示
+                  return dateStr;
+                }),
+                datasets: [
+                  {
+                    label: "訪問者数",
+                    data: stats.map((item) => item.count),
+                    borderColor: "#646cff",
+                    backgroundColor: "rgba(100, 108, 255, 0.1)",
+                    borderWidth: 2,
+                    fill: true,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: "#646cff",
+                    pointBorderColor: "#646cff",
+                    tension: 0.4,
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: "top",
+                    labels: {
+                      color: "#888",
+                      font: {
+                        size: 14,
+                      },
+                    },
+                  },
+                  tooltip: {
+                    backgroundColor: "rgba(26, 26, 26, 0.9)",
+                    titleColor: "#fff",
+                    bodyColor: "#fff",
+                    borderColor: "#333",
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
+                  },
+                },
+                scales: {
+                  x: {
+                    title: {
+                      display: true,
+                      text: "日時（月/日 時:分）",
+                      color: "#888",
+                      font: {
+                        size: 14,
+                      },
+                    },
+                    ticks: {
+                      color: "#888",
+                      font: {
+                        size: 11,
+                      },
+                      maxRotation: 45,
+                      minRotation: 45,
+                      callback: function (value, index) {
+                        // すべてのラベルを表示（間引きしない）
+                        return this.getLabelForValue(value as number);
+                      },
+                    },
+                    grid: {
+                      color: "rgba(255, 255, 255, 0.1)",
+                    },
+                  },
+                  y: {
+                    title: {
+                      display: true,
+                      text: "訪問者数",
+                      color: "#888",
+                      font: {
+                        size: 14,
+                      },
+                    },
+                    ticks: {
+                      color: "#888",
+                      font: {
+                        size: 12,
+                      },
+                      stepSize: 1,
+                      precision: 0,
+                    },
+                    beginAtZero: true,
+                    grid: {
+                      color: "rgba(255, 255, 255, 0.1)",
+                    },
+                  },
+                },
+              }}
+            />
           </div>
         ) : (
           <div className="no-data">データがありません</div>
